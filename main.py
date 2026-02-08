@@ -8,13 +8,18 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 load_dotenv()
+
 API_URL = os.getenv("API_URL", "http://localhost:11434/v1")
 API_KEY = os.getenv("API_KEY", "ollama")
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen3-vl:4b")
+MODEL_NAME = os.getenv("MODEL_NAME", "qwen3-vl:2b-instruct")
 CLIENT = OpenAI(base_url=API_URL, api_key=API_KEY)
 
 
-def convert_screenshot_to_latex():
+def sanitize_latex(latex: str) -> str:
+    return latex.replace("```latex", "").replace("```", "").replace("$", "").strip()
+
+
+def main():
     img = ImageGrab.grabclipboard()
 
     if img is None:
@@ -26,27 +31,27 @@ def convert_screenshot_to_latex():
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
     try:
-        response = CLIENT.chat.completions.create(
+        response = CLIENT.responses.create(
             model=MODEL_NAME,
-            messages=[
+            input=[
                 {
                     "role": "user",
                     "content": [
                         {
-                            "type": "text",
+                            "type": "input_text",
                             "text": "Convert this equation to LaTeX. Output ONLY the raw LaTeX string.",
                         },
                         {
-                            "type": "image_url",
-                            "image_url": {"url": f"data:image/png;base64,{img_str}"},
+                            "type": "input_image",
+                            "image_url": f"data:image/png;base64,{img_str}",
                         },
                     ],
                 }
             ],
         )
 
-        latex_result = response.choices[0].message.content.strip()
-        latex_result = latex_result.replace("```latex", "").replace("```", "").strip()
+        latex_result = response.output_text.strip()
+        latex_result = sanitize_latex(latex_result)
 
         pyperclip.copy(latex_result)
         print(f"LaTeX (also copied to clipboard): {latex_result}")
@@ -55,5 +60,6 @@ def convert_screenshot_to_latex():
         print(f"Error: {e}")
 
 
-keyboard.add_hotkey("ctrl+alt+l", convert_screenshot_to_latex)
-keyboard.wait()
+if __name__ == "__main__":
+    keyboard.add_hotkey("ctrl+alt+l", main)
+    keyboard.wait()
