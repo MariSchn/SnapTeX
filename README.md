@@ -3,7 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 [![Python 3.12+](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/downloads/)
 
-Screenshot to LaTeX converter powered by vision LLMs. Press a hotkey, and SnapTeX converts the image in your clipboard to a LaTeX string and copies it back, ready to paste.
+Screenshot to LaTeX converter powered by Vision-Language Models. Press a hotkey, and SnapTeX converts the image in your clipboard to a LaTeX string and copies it back, ready to paste.
 
 
 ## Features
@@ -18,7 +18,7 @@ Screenshot to LaTeX converter powered by vision LLMs. Press a hotkey, and SnapTe
 
 1. Take a screenshot of an equation (e.g. with Snipping Tool or `Win+Shift+S`).
 2. Press **Ctrl+Alt+L** (configurable).
-3. SnapTeX sends the clipboard image to a vision model and copies the resulting LaTeX to your clipboard.
+3. SnapTeX sends the clipboard image to a VLM and copies the resulting LaTeX to your clipboard.
 
 ## Setup
 
@@ -75,7 +75,7 @@ All configuration is done through the `.env` file:
 | ------------ | ----------------------------------- | -------------------------------- |
 | `API_URL`    | OpenAI-compatible API endpoint      | `http://localhost:11434/v1`      |
 | `API_KEY`    | API key for the endpoint            | `ollama`                         |
-| `MODEL_NAME` | Vision model to use                 | [`qwen3-vl:2b-instruct`](https://ollama.com/library/qwen3-vl:2b-instruct) |
+| `MODEL_NAME` | VLM model to use                    | [`qwen3-vl:2b-instruct`](https://ollama.com/library/qwen3-vl:2b-instruct) |
 | `SHORTCUTS`  | Comma-separated hotkeys to register | `ctrl+alt+l`                     |
 
 ### Example: Using Ollama (local)
