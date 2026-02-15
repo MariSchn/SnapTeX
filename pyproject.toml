@@ -1,9 +1,11 @@
 [project]
 name = "SnapTeX"
 version = "0.1.0"
-description = "Add your description here"
+description = "Screenshot to LaTeX converter powered by vision LLMs"
 readme = "README.md"
 requires-python = ">=3.12"
+license = "MIT"
+keywords = ["latex", "screenshot", "ocr", "vision-llm", "clipboard", "hotkey", "equation"]
 dependencies = [
     "keyboard>=0.13.5",
     "openai>=2.16.0",
