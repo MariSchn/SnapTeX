@@ -20,7 +20,4 @@ done
 
 # Pull the model if needed, then run
 ollama pull "$MODEL_NAME"
-echo ""
-echo "[SnapTeX] Press Ctrl+Alt+L to convert screenshots!"
-echo ""
 uv run main.py

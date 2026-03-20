@@ -12,6 +12,6 @@ curl -s "!API_URL:/v1=!/api/version" >nul 2>&1 || start "" ollama serve
 curl -s "!API_URL:/v1=!/api/version" >nul 2>&1 || (timeout /t 2 /nobreak >nul & goto :wait)
 
 :: Pull the model if needed, then run
-ollama pull !MODEL_NAME! && echo. && echo [SnapTeX] Press Ctrl+Alt+L to convert screenshots! && echo. && uv run main.py
+ollama pull !MODEL_NAME! && echo. && uv run main.py
 
 endlocal
