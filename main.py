@@ -1,10 +1,10 @@
 import io
 import os
 import base64
+import platform
 import pyperclip
-import keyboard
+from pynput import keyboard
 import time
-from PIL import ImageGrab
 from dotenv import load_dotenv
 from openai import OpenAI
 
@@ -13,8 +13,25 @@ load_dotenv()
 API_URL = os.getenv("API_URL", "http://localhost:11434/v1")
 API_KEY = os.getenv("API_KEY", "ollama")
 MODEL_NAME = os.getenv("MODEL_NAME", "qwen3-vl:2b-instruct")
-SHORTCUTS = os.getenv("SHORTCUTS", "ctrl+alt+l").split(",")
+SHORTCUTS = [s.strip() for s in os.getenv("SHORTCUTS", "ctrl+alt+l").split(",")]
 CLIENT = OpenAI(base_url=API_URL, api_key=API_KEY)
+IS_MACOS = platform.system() == "Darwin"
+
+
+def get_clipboard_image():
+    if IS_MACOS:
+        from AppKit import NSPasteboard, NSPasteboardTypePNG, NSPasteboardTypeTIFF
+        from PIL import Image
+
+        pb = NSPasteboard.generalPasteboard()
+        data = pb.dataForType_(NSPasteboardTypePNG) or pb.dataForType_(NSPasteboardTypeTIFF)
+        if data is None:
+            return None
+        return Image.open(io.BytesIO(data.bytes().tobytes()))
+    else:
+        from PIL import ImageGrab
+
+        return ImageGrab.grabclipboard()
 
 
 def sanitize_latex(latex: str) -> str:
@@ -24,7 +41,7 @@ def sanitize_latex(latex: str) -> str:
 def convert_screenshot_to_latex():
     start_time = time.perf_counter()
 
-    img = ImageGrab.grabclipboard()
+    img = get_clipboard_image()
     if img is None:
         print("Detected hotkey! No image in clipboard. Capture something first!")
         return
@@ -65,10 +82,23 @@ def convert_screenshot_to_latex():
     )
 
 
+def to_pynput_hotkey(shortcut: str) -> str:
+    """Convert 'ctrl+alt+l' style to pynput '<ctrl>+<alt>+l' style."""
+    aliases = {"option": "alt", "windows": "super"}
+    modifiers = {"ctrl", "alt", "shift", "cmd", "super"}
+    parts = shortcut.strip().split("+")
+    result = []
+    for p in parts:
+        key = aliases.get(p.lower(), p.lower())
+        result.append(f"<{key}>" if key in modifiers else key)
+    return "+".join(result)
+
+
 def main():
-    for shortcut in SHORTCUTS:
-        keyboard.add_hotkey(shortcut, convert_screenshot_to_latex)
-    keyboard.wait()
+    hotkeys = {to_pynput_hotkey(s): convert_screenshot_to_latex for s in SHORTCUTS}
+    print(f"[SnapTeX] Listening for: {', '.join(SHORTCUTS)}")
+    with keyboard.GlobalHotKeys(hotkeys) as listener:
+        listener.join()
 
 
 if __name__ == "__main__":
