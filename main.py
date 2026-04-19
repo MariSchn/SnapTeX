@@ -94,10 +94,21 @@ def to_pynput_hotkey(shortcut: str) -> str:
     return "+".join(result)
 
 
+class GlobalHotKeys(keyboard.GlobalHotKeys):
+    """Workaround for pynput 1.8.1 on macOS where the darwin handler passes an
+    `injected` argument that GlobalHotKeys._on_press/_on_release don't accept."""
+
+    def _on_press(self, key, injected=False):
+        return super()._on_press(key)
+
+    def _on_release(self, key, injected=False):
+        return super()._on_release(key)
+
+
 def main():
     hotkeys = {to_pynput_hotkey(s): convert_screenshot_to_latex for s in SHORTCUTS}
     print(f"[SnapTeX] Listening for: {', '.join(SHORTCUTS)}")
-    with keyboard.GlobalHotKeys(hotkeys) as listener:
+    with GlobalHotKeys(hotkeys) as listener:
         listener.join()
 
 
