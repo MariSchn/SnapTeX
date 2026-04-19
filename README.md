@@ -56,6 +56,12 @@ The `scripts/` directory provides convenience scripts that start Ollama, pull th
 ./scripts/run_ollama.sh   # Linux / macOS
 ```
 
+Pass a model name as the first argument to override `MODEL_NAME` from `.env` for that run:
+
+```bash
+./scripts/run_ollama.sh qwen3-vl:8b-instruct
+```
+
 ### Manual Start
 
 1. Start your preferred OpenAI-compatible API server (skip if using a cloud API).

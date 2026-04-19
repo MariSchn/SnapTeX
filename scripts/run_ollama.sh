@@ -8,6 +8,11 @@ set -a
 source "$SCRIPT_DIR/../.env"
 set +a
 
+# Optional CLI override for the model
+if [ $# -gt 0 ]; then
+    export MODEL_NAME="$1"
+fi
+
 API_VERSION_URL="${API_URL%/v1}/api/version"
 
 # Start ollama if not already running
