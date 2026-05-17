@@ -99,10 +99,16 @@ class GlobalHotKeys(keyboard.GlobalHotKeys):
     `injected` argument that GlobalHotKeys._on_press/_on_release don't accept."""
 
     def _on_press(self, key, injected=False):
-        return super()._on_press(key)
+        try:
+            return super()._on_press(key, injected)
+        except TypeError:
+            return super()._on_press(key)
 
     def _on_release(self, key, injected=False):
-        return super()._on_release(key)
+        try:
+            return super()._on_release(key, injected)
+        except TypeError:
+            return super()._on_release(key)
 
 
 def main():
