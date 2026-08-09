@@ -303,3 +303,15 @@ model = "glm-ocr:q8_0"
 [run.glm-ocr-q8-ctx1k.options]
 num_ctx = 1024
 stop = ["\n```", "\n$$"]
+
+[run.mlx-glm-ocr-4bit]
+engine = "openai"
+model = "mlx-community/GLM-OCR-4bit"
+[run.mlx-glm-ocr-4bit.options]
+stop = ["\n```", "\n$$"]
+
+[run.mlx-glm-ocr-8bit]
+engine = "openai"
+model = "mlx-community/GLM-OCR-8bit"
+[run.mlx-glm-ocr-8bit.options]
+stop = ["\n```", "\n$$"]

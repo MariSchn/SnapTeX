@@ -1,5 +1,6 @@
 import io
 import os
+import re
 import base64
 import platform
 import pyperclip
@@ -12,10 +13,19 @@ load_dotenv()
 
 API_URL = os.getenv("API_URL", "http://localhost:11434/v1")
 API_KEY = os.getenv("API_KEY", "ollama")
-MODEL_NAME = os.getenv("MODEL_NAME", "qwen3-vl:2b-instruct")
+MODEL_NAME = os.getenv("MODEL_NAME", "glm-ocr:q8_0")
 SHORTCUTS = [s.strip() for s in os.getenv("SHORTCUTS", "ctrl+alt+l").split(",")]
+MAX_TOKENS = int(os.getenv("MAX_TOKENS", "256"))
 CLIENT = OpenAI(base_url=API_URL, api_key=API_KEY)
 IS_MACOS = platform.system() == "Darwin"
+
+PROMPT = "Convert this equation to LaTeX. Output ONLY the raw LaTeX string."
+
+# Page-OCR models transcribe the equation and then keep re-emitting it in
+# fenced blocks until they hit the token cap - with glm-ocr that is the
+# difference between 0.17s and 1.9s. Harmless for models that stop by
+# themselves.
+STOP_SEQUENCES = ["\n```", "\n$$"]
 
 
 def get_clipboard_image():
@@ -35,7 +45,11 @@ def get_clipboard_image():
 
 
 def sanitize_latex(latex: str) -> str:
-    return latex.replace("```latex", "").replace("```", "").replace("$", "").strip()
+    latex = re.sub(r"```[a-zA-Z]*", "", latex).replace("$", "")
+    # Some models put a space before every group: `\mathbf {B}`, `\mu_ {0}`.
+    # It compiles, but it is not what you want to paste into a document.
+    latex = re.sub(r"(\\[a-zA-Z]+|[_^])\s+\{", r"\1{", latex)
+    return latex.strip()
 
 
 def convert_screenshot_to_latex():
@@ -51,29 +65,29 @@ def convert_screenshot_to_latex():
     img_str = base64.b64encode(buffered.getvalue()).decode("utf-8")
 
     try:
-        response = CLIENT.responses.create(
+        response = CLIENT.chat.completions.create(
             model=MODEL_NAME,
-            input=[
+            messages=[
                 {
                     "role": "user",
                     "content": [
+                        {"type": "text", "text": PROMPT},
                         {
-                            "type": "input_text",
-                            "text": "Convert this equation to LaTeX. Output ONLY the raw LaTeX string.",
-                        },
-                        {
-                            "type": "input_image",
-                            "image_url": f"data:image/png;base64,{img_str}",
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{img_str}"},
                         },
                     ],
                 }
             ],
+            temperature=0,
+            max_tokens=MAX_TOKENS,
+            stop=STOP_SEQUENCES,
         )
     except Exception as e:
         print(f"Error: {e}")
+        return
 
-    latex_result = response.output_text.strip()
-    latex_result = sanitize_latex(latex_result)
+    latex_result = sanitize_latex(response.choices[0].message.content or "")
     pyperclip.copy(latex_result)
 
     end_time = time.perf_counter()
