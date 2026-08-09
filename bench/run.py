@@ -38,13 +38,26 @@ RESULTS_DIR = BENCH_DIR / "results"
 DEFAULT_PROMPT = "Convert this equation to LaTeX. Output ONLY the raw LaTeX string."
 
 
-def encode_image(path: Path, max_px: int | None) -> str:
-    """PNG -> base64. Optionally downscale so the longest side is max_px."""
+def encode_image(path: Path, max_px: int | None, min_px: int | None) -> str:
+    """PNG -> base64, with the longest side clamped into [min_px, max_px].
+
+    Both directions matter. Downscaling cuts the visual token count on servers
+    that do dynamic resolution; upscaling raises it, which is how you buy
+    accuracy back on a small screenshot. Ollama ignores both - it resizes
+    everything to a fixed grid - but mlx-vlm honours the real Qwen3-VL
+    dynamic-resolution behaviour.
+    """
     img = Image.open(path).convert("RGB")
-    if max_px and max(img.size) > max_px:
-        scale = max_px / max(img.size)
+    longest = max(img.size)
+    scale = 1.0
+    if max_px and longest > max_px:
+        scale = max_px / longest
+    elif min_px and longest < min_px:
+        scale = min_px / longest
+    if scale != 1.0:
         img = img.resize(
-            (round(img.width * scale), round(img.height * scale)), Image.LANCZOS
+            (max(1, round(img.width * scale)), max(1, round(img.height * scale))),
+            Image.LANCZOS,
         )
     buf = io.BytesIO()
     img.save(buf, format="PNG")
@@ -60,6 +73,10 @@ def call_ollama(client, cfg, image_b64):
         "keep_alive": cfg.get("keep_alive", "10m"),
         "options": cfg.get("options", {}),
     }
+    # Hybrid reasoning models (qwen3.5, ...) otherwise spend the whole token
+    # budget thinking about a one-line transcription and return empty content.
+    if "think" in cfg:
+        body["think"] = cfg["think"]
     r = client.post(f"{cfg['base_url'].rstrip('/')}/api/chat", json=body)
     r.raise_for_status()
     data = r.json()
@@ -136,12 +153,14 @@ def run_config(
 ) -> dict:
     caller = CALLERS[cfg.get("engine", "ollama")]
     timeout = cfg.get("timeout", 300)
-    max_px = cfg.get("max_px")
+    max_px, min_px = cfg.get("max_px"), cfg.get("min_px")
 
-    encoded = {s["id"]: encode_image(BENCH_DIR / s["image"], max_px) for s in samples}
+    encoded = {
+        s["id"]: encode_image(BENCH_DIR / s["image"], max_px, min_px) for s in samples
+    }
     # Deliberately an image that is not in the corpus, so the server's prompt
     # cache can't hand the first timed samples a free prefill.
-    encoded_warmup = encode_image(BENCH_DIR / warmup_image, max_px)
+    encoded_warmup = encode_image(BENCH_DIR / warmup_image, max_px, min_px)
 
     with httpx.Client(timeout=timeout) as client:
         print(f"[{name}] warming up ({warmup} calls)...", flush=True)

@@ -76,6 +76,104 @@ def _strip_redundant_braces(s: str) -> str:
     return s
 
 
+# A group opening straight after one of these is decorative - there is no
+# argument slot here for it to fill.
+_GROUP_ANCHORS = set("=+-*/<>(),;&|[]!")
+
+# Operator names take no argument, so `\log{x}` is just `\log x`.
+_NO_ARG_COMMANDS = {
+    "log",
+    "ln",
+    "lg",
+    "exp",
+    "sin",
+    "cos",
+    "tan",
+    "cot",
+    "sec",
+    "csc",
+    "sinh",
+    "cosh",
+    "tanh",
+    "arcsin",
+    "arccos",
+    "arctan",
+    "lim",
+    "limsup",
+    "liminf",
+    "max",
+    "min",
+    "sup",
+    "inf",
+    "det",
+    "dim",
+    "ker",
+    "deg",
+    "arg",
+    "gcd",
+    "Pr",
+    "sum",
+    "prod",
+    "int",
+    "oint",
+    "iint",
+    "iiint",
+}
+
+_COMMAND_END_RE = re.compile(r"\\([a-zA-Z]+)$")
+
+
+def _strip_decorative_groups(s: str) -> str:
+    """Drop `{...}` groups that aren't filling an argument slot.
+
+    Some models bracket every subexpression: `= {\\frac{1}{N}}` instead of
+    `= \\frac{1}{N}`. It renders identically, and penalising it would score
+    output style rather than transcription accuracy. A group is decorative
+    when the token before it is an operator, a relation, an opening delimiter
+    or the start of the string - never when it follows `^`, `_` or a command,
+    where the braces carry meaning.
+    """
+    prev = None
+    while prev != s:
+        prev = s
+
+        # Match every brace pair, and note what character introduced it.
+        opens, pairs = [], []
+        for i, ch in enumerate(s):
+            if ch == "{":
+                opens.append(i)
+            elif ch == "}" and opens:
+                pairs.append((opens.pop(), i))
+
+        anchor_of = {}  # open index -> index of the preceding non-space char
+        for start, _end in pairs:
+            before = s[:start].rstrip()
+            anchor_of[start] = len(before) - 1 if before else None
+
+        # `^{...}` and `_{...}` take exactly one argument, so a group sitting
+        # right after one of them is filling no slot.
+        script_close = {
+            end
+            for start, end in pairs
+            if anchor_of[start] is not None and s[anchor_of[start]] in "^_"
+        }
+
+        drop = set()
+        for start, end in pairs:
+            at = anchor_of[start]
+            if at is None or s[at] in _GROUP_ANCHORS or at in script_close:
+                drop |= {start, end}
+                continue
+            command = _COMMAND_END_RE.search(s[: at + 1])
+            if command and command.group(1) in _NO_ARG_COMMANDS:
+                drop |= {start, end}
+
+        if drop:
+            s = "".join(" " if i in drop else c for i, c in enumerate(s))
+            s = re.sub(r"\s+", " ", s)
+    return s
+
+
 def normalize(latex: str) -> str:
     """Cosmetic cleanup. Whitespace is collapsed but not dropped, because
     `\\sin x` and `\\sinx` are not the same thing; the tokenizer handles the
@@ -84,7 +182,11 @@ def normalize(latex: str) -> str:
     for pattern, repl in _SUBSTITUTIONS:
         s = re.sub(pattern, repl, s)
     s = re.sub(r"\s+", " ", s)
+    # Decorative groups go first: unwrapping `^{\infty}` to `^ \infty` would
+    # erase the evidence that the superscript's one argument slot is filled.
+    s = _strip_decorative_groups(s)
     s = _strip_redundant_braces(s)
+    s = _strip_decorative_groups(s)
     return s.strip()
 
 
