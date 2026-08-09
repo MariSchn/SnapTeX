@@ -59,8 +59,19 @@ The `scripts/` directory provides convenience scripts that start Ollama, pull th
 Pass a model name as the first argument to override `MODEL_NAME` from `.env` for that run:
 
 ```bash
-./scripts/run_ollama.sh qwen3-vl:8b-instruct
+./scripts/run_ollama.sh qwen3-vl:2b-instruct
 ```
+
+### Tuned configurations
+
+Two variants apply the settings from the benchmark (see [Choosing a model](#choosing-a-model)):
+
+| Script | What it does |
+| --- | --- |
+| `run_ollama_optimized.sh` / `.bat` | `glm-ocr:q8_0` with `OLLAMA_CONTEXT_LENGTH=2048` — same speed as the plain script, ~1.2 GB resident instead of ~18 GB |
+| `run_mlx.sh` | GLM-OCR on MLX, roughly twice as fast. Apple Silicon only, needs `pip install mlx-vlm` |
+
+The memory saving only applies to a server the script starts itself. If you already run Ollama as a background service, set `OLLAMA_CONTEXT_LENGTH` there instead.
 
 ### Manual Start
 
