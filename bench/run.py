@@ -255,10 +255,17 @@ def main() -> int:
     raw = tomllib.loads(args.config.read_text())
     defaults = raw.get("defaults", {})
     prompts = raw.get("prompts", {})
+    engine_defaults = {e: defaults.get(e, {}) for e in CALLERS}
+    shared = {k: v for k, v in defaults.items() if k not in CALLERS}
+
     entries = {}
     for name, cfg in raw.get("run", {}).items():
-        merged = {**defaults, **cfg}
-        merged["options"] = {**defaults.get("options", {}), **cfg.get("options", {})}
+        engine = cfg.get("engine", shared.get("engine", "ollama"))
+        if engine not in CALLERS:
+            parser.error(f"{name}: unknown engine '{engine}'")
+        base = engine_defaults[engine]
+        merged = {**shared, **base, **cfg, "engine": engine}
+        merged["options"] = {**base.get("options", {}), **cfg.get("options", {})}
         prompt_id = merged.get("prompt_id")
         if prompt_id and prompt_id not in prompts:
             parser.error(f"{name}: unknown prompt_id '{prompt_id}'")

@@ -62,11 +62,17 @@ _BRACE_RE = re.compile(r"\{\s*(\\[a-zA-Z]+|[^{}\\\s])\s*\}")
 
 
 def _strip_redundant_braces(s: str) -> str:
-    """`x^{2}` -> `x^2`, `{a}` -> `a`. Only safe for single-token groups."""
+    """`x^{2}` -> `x 2`, `{a}` -> `a`. Only safe for single-token groups.
+
+    The replacement is space-padded on purpose: dropping the braces outright
+    would turn `\\frac{d}{t}` into `\\fracdt`, which the tokenizer then reads as
+    one long command. The tokenizer ignores whitespace, so the padding costs
+    nothing.
+    """
     prev = None
     while prev != s:
         prev = s
-        s = _BRACE_RE.sub(r"\1", s)
+        s = _BRACE_RE.sub(r" \1 ", s)
     return s
 
 

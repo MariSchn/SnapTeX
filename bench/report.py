@@ -10,6 +10,10 @@ import json
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent))
+from latexscore import score  # noqa: E402
+from run import summarize  # noqa: E402
+
 BENCH_DIR = Path(__file__).parent
 RESULTS_DIR = BENCH_DIR / "results"
 
@@ -50,6 +54,13 @@ def main() -> int:
     parser.add_argument("names", nargs="*", help="runs to include (default: all)")
     parser.add_argument("--sort", choices=SORT_KEYS, default="latency")
     parser.add_argument("--results", type=Path, default=RESULTS_DIR)
+    parser.add_argument(
+        "--rescore",
+        action="store_true",
+        help="recompute scores from the stored predictions and rewrite the "
+        "result files - use after changing latexscore.py, instead of "
+        "re-running every model",
+    )
     args = parser.parse_args()
 
     if args.names:
@@ -66,6 +77,17 @@ def main() -> int:
         return 1
 
     results = [json.loads(p.read_text()) for p in paths]
+
+    if args.rescore:
+        for path, result in zip(paths, results):
+            for r in result["records"]:
+                if "error" in r:
+                    continue
+                r["score"], r["exact"] = score(r["prediction"], r["reference"])
+            result.update(summarize(result["records"]))
+            path.write_text(json.dumps(result, indent=2) + "\n")
+        print(f"rescored {len(results)} result file(s)\n")
+
     if not args.names:
         results.sort(key=SORT_KEYS[args.sort])
 

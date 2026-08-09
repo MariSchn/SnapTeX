@@ -8,16 +8,16 @@ conversion takes, and how much of the equation survives it.
 
 ```bash
 uv sync --group bench
-uv run bench/render.py            # build the corpus (needs LaTeX; see below)
+uv run bench/render.py            # build the corpus, once
 uv run bench/run.py --list        # what's configured
 uv run bench/run.py qwen3vl-4b    # benchmark one config
 uv run bench/run.py --all         # benchmark everything
 uv run bench/report.py            # print the comparison table
 ```
 
-The rendered corpus is committed, so `render.py` is only needed if you want to
-change or extend the equations. It requires `latex` and `dvipng` on your PATH
-(MacTeX, TeX Live, MiKTeX).
+`render.py` needs `latex` and `dvipng` on your PATH (MacTeX, TeX Live, MiKTeX).
+The images it produces aren't checked in — they're derived from
+`corpus/equations.txt` and regenerate in a few seconds.
 
 ## Adding your own model
 
