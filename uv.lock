@@ -637,6 +637,9 @@ dependencies = [
 ]
 
 [package.dev-dependencies]
+bench = [
+    { name = "httpx" },
+]
 dev = [
     { name = "pre-commit" },
     { name = "ruff" },
@@ -652,6 +655,7 @@ requires-dist = [
 ]
 
 [package.metadata.requires-dev]
+bench = [{ name = "httpx", specifier = ">=0.28.1" }]
 dev = [
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "ruff", specifier = ">=0.15.0" },

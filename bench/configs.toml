@@ -1,0 +1,86 @@
+# Benchmark configurations.
+#
+# Every [run.<name>] block is one thing you can benchmark:
+#     uv run bench/run.py <name>
+#
+# Keys:
+#   engine      "ollama" (native /api/chat, full options block) or "openai"
+#               (/v1/chat/completions - mlx-vlm, llama-server, vLLM, cloud APIs)
+#   base_url    server root, no trailing /v1
+#   model       model name as the server knows it
+#   max_px      downscale the image so its longest side is at most this, client
+#               side, before sending. Omit to send the screenshot untouched.
+#   keep_alive  ollama only, how long to hold the model in memory
+#   options     ollama: the native options block (num_ctx, num_predict, ...)
+#               openai: merged into the request body (temperature, max_tokens)
+#   prompt_id   which entry from [prompts] below to send
+#
+# To add your own model: copy a block, change the name and model, run it.
+
+[defaults]
+engine = "ollama"
+base_url = "http://127.0.0.1:11434"
+keep_alive = "10m"
+timeout = 300
+prompt_id = "baseline"
+
+[defaults.options]
+temperature = 0
+seed = 0
+num_predict = 256
+
+
+# --- prompts ---------------------------------------------------------------
+
+[prompts]
+baseline = "Convert this equation to LaTeX. Output ONLY the raw LaTeX string."
+
+terse = "Transcribe this equation as LaTeX."
+
+strict = """
+Transcribe the equation in this image as LaTeX.
+Output the LaTeX only: no $ delimiters, no code fences, no explanation.
+"""
+
+# Nudges the model straight into the answer instead of a preamble.
+prefill = "Equation to LaTeX. Answer with the LaTeX body only, nothing else."
+
+
+# --- model sweep -----------------------------------------------------------
+# Default (Q4_K_M-ish) weights, everything else held constant.
+
+[run.qwen3vl-2b]
+model = "qwen3-vl:2b-instruct"
+
+[run.qwen3vl-4b]
+model = "qwen3-vl:4b-instruct"
+
+[run.qwen3vl-8b]
+model = "qwen3-vl:8b-instruct"
+
+[run.qwen35-2b]
+model = "qwen3.5:2b"
+
+[run.qwen35-4b]
+model = "qwen3.5:4b"
+
+[run.qwen35-9b]
+model = "qwen3.5:9b"
+
+[run.gemma4-e2b]
+model = "gemma4:e2b-it-qat"
+
+[run.gemma4-e4b]
+model = "gemma4:e4b-it-qat"
+
+[run.ministral3-3b]
+model = "ministral-3:3b"
+
+[run.ministral3-8b]
+model = "ministral-3:8b"
+
+[run.glm-ocr]
+model = "glm-ocr:latest"
+
+[run.deepseek-ocr-3b]
+model = "deepseek-ocr:3b"

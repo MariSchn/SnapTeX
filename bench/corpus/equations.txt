@@ -1,0 +1,59 @@
+# Ground-truth equations for the SnapTeX benchmark.
+#
+# One equation per line, plain LaTeX math mode (no surrounding $ or \[ \]).
+# Lines starting with '#' are comments, blank lines are ignored.
+# A line of the form '@tier <name>' starts a new difficulty tier; every
+# equation below it belongs to that tier until the next '@tier'.
+#
+# Keep these written the way a person would write them by hand. The scorer
+# normalises away the usual cosmetic differences (spacing, \left\right,
+# redundant braces, \cdot vs \times, ...) so don't bother being clever here.
+
+@tier simple
+
+E = mc^2
+a^2 + b^2 = c^2
+x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}
+f(x) = \sin(x) + \cos(x)
+\alpha + \beta = \gamma
+v = \frac{d}{t}
+P(A \cap B) = P(A)P(B)
+y = mx + b
+\log_2(8) = 3
+\lim_{x \to 0} \frac{\sin x}{x} = 1
+
+@tier medium
+
+\int_0^\infty e^{-x^2} dx = \frac{\sqrt{\pi}}{2}
+\sum_{n=1}^{\infty} \frac{1}{n^2} = \frac{\pi^2}{6}
+\frac{\partial u}{\partial t} = \alpha \frac{\partial^2 u}{\partial x^2}
+\nabla \times \mathbf{B} = \mu_0 \mathbf{J} + \mu_0 \varepsilon_0 \frac{\partial \mathbf{E}}{\partial t}
+\binom{n}{k} = \frac{n!}{k!(n-k)!}
+\hat{H} \psi = E \psi
+\mathcal{L}(\theta) = -\frac{1}{N} \sum_{i=1}^{N} y_i \log \hat{y}_i
+\sigma(z) = \frac{1}{1 + e^{-z}}
+\left( \frac{a}{b} \right)^n = \frac{a^n}{b^n}
+\det(A - \lambda I) = 0
+\oint_C \mathbf{F} \cdot d\mathbf{r} = \iint_S (\nabla \times \mathbf{F}) \cdot d\mathbf{S}
+\mathbb{E}[X] = \int_{-\infty}^{\infty} x f(x) \, dx
+\frac{d}{dx} \left[ \int_a^x f(t) \, dt \right] = f(x)
+x_{n+1} = x_n - \frac{f(x_n)}{f'(x_n)}
+\Gamma(z) = \int_0^\infty t^{z-1} e^{-t} dt
+
+@tier hard
+
+A = \begin{pmatrix} a_{11} & a_{12} \\ a_{21} & a_{22} \end{pmatrix}
+\begin{bmatrix} 1 & 0 & 0 \\ 0 & 1 & 0 \\ 0 & 0 & 1 \end{bmatrix}
+f(x) = \begin{cases} x^2 & \text{if } x \geq 0 \\ -x^2 & \text{if } x < 0 \end{cases}
+\text{Attention}(Q, K, V) = \text{softmax}\left( \frac{QK^T}{\sqrt{d_k}} \right) V
+\mathcal{N}(x \mid \mu, \sigma^2) = \frac{1}{\sqrt{2\pi\sigma^2}} \exp\left( -\frac{(x-\mu)^2}{2\sigma^2} \right)
+D_{KL}(P \| Q) = \sum_{x \in \mathcal{X}} P(x) \log \frac{P(x)}{Q(x)}
+\frac{1}{\sqrt{1 - \frac{v^2}{c^2}}}
+i\hbar \frac{\partial}{\partial t} \Psi(\mathbf{r}, t) = \left[ -\frac{\hbar^2}{2m} \nabla^2 + V(\mathbf{r}, t) \right] \Psi(\mathbf{r}, t)
+\sum_{k=0}^{n} \binom{n}{k} x^k y^{n-k} = (x+y)^n
+R_{\mu\nu} - \frac{1}{2} R g_{\mu\nu} + \Lambda g_{\mu\nu} = \frac{8\pi G}{c^4} T_{\mu\nu}
+\theta_{t+1} = \theta_t - \eta \frac{m_t}{\sqrt{v_t} + \epsilon}
+\prod_{p \text{ prime}} \frac{1}{1 - p^{-s}} = \sum_{n=1}^{\infty} \frac{1}{n^s}
+\underset{\theta}{\arg\min} \; \frac{1}{2} \| y - X\theta \|_2^2 + \lambda \| \theta \|_1
+\left. \frac{dy}{dx} \right|_{x=0} = 2
+\iiint_V \left( \frac{\partial P}{\partial x} + \frac{\partial Q}{\partial y} + \frac{\partial R}{\partial z} \right) dV
