@@ -121,6 +121,21 @@ def call_openai(client, cfg, image_b64):
 CALLERS = {"ollama": call_ollama, "openai": call_openai}
 
 
+def reset_model(cfg) -> None:
+    """Unload the model so its cached image embeddings go with it.
+
+    Ollama keeps the vision encoder's output per image for as long as the
+    model stays resident: re-sending the same screenshot costs 0.005s of
+    prefill instead of 0.44s. That is lovely in a chat loop and completely
+    unrepresentative here - every SnapTeX conversion is a screenshot the
+    server has never seen. Without this, whichever config happens to run
+    second over the same corpus looks three times faster than the one before
+    it.
+    """
+    if cfg.get("engine") == "ollama":
+        subprocess.run(["ollama", "stop", cfg["model"]], capture_output=True)
+
+
 def resident_size_mb(cfg) -> float | None:
     """How much memory the model is actually holding, per `ollama ps`."""
     if cfg.get("engine") != "ollama":
@@ -163,16 +178,21 @@ def run_config(
     encoded_warmup = encode_image(BENCH_DIR / warmup_image, max_px, min_px)
 
     with httpx.Client(timeout=timeout) as client:
-        print(f"[{name}] warming up ({warmup} calls)...", flush=True)
-        for _ in range(warmup):
-            caller(client, cfg, encoded_warmup)
-
-        # Measured after warmup, so the model is loaded and the vision tower
-        # has actually been touched.
-        loaded_mb = resident_size_mb(cfg)
-
+        loaded_mb = None
         records = []
         for rep in range(repeats):
+            # Each pass starts cold, otherwise pass 2 would be scoring the
+            # image cache rather than the model.
+            if cfg.get("reset", True):
+                reset_model(cfg)
+            print(f"[{name}] warming up ({warmup} calls)...", flush=True)
+            for _ in range(warmup):
+                caller(client, cfg, encoded_warmup)
+
+            # Measured after warmup, so the model is loaded and the vision
+            # tower has actually been touched.
+            loaded_mb = loaded_mb or resident_size_mb(cfg)
+
             for s in samples:
                 t0 = time.perf_counter()
                 try:
