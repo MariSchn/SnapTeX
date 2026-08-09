@@ -89,11 +89,14 @@ think = false
 model = "qwen3.5:9b"
 think = false
 
+# gemma4 is another hybrid reasoning model - same story as qwen3.5.
 [run.gemma4-e2b]
 model = "gemma4:e2b-it-qat"
+think = false
 
 [run.gemma4-e4b]
 model = "gemma4:e4b-it-qat"
+think = false
 
 [run.ministral3-3b]
 model = "ministral-3:3b"
@@ -101,8 +104,14 @@ model = "ministral-3:3b"
 [run.ministral3-8b]
 model = "ministral-3:8b"
 
+# glm-ocr is a full-page document OCR model: it transcribes the equation
+# correctly and then keeps re-emitting it in fenced blocks until it runs out of
+# budget. A stop sequence is the difference between 0.23 and a real score.
 [run.glm-ocr]
 model = "glm-ocr:latest"
+
+[run.glm-ocr.options]
+stop = ["\n```", "\n$$"]
 
 [run.deepseek-ocr-3b]
 model = "deepseek-ocr:3b"

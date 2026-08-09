@@ -27,7 +27,14 @@ import re
 # rendered result is identical before and after.
 _SUBSTITUTIONS = [
     # Markdown fences and math delimiters the model may wrap the answer in.
-    (r"```(?:latex|tex)?", ""),
+    # Any fence language: models have offered latex, tex, mathematica, math.
+    (r"```[a-zA-Z]*", ""),
+    # Page-OCR models like to wrap the answer in HTML, or hand back a whole
+    # compilable document. Also catches stray chat special tokens (<|im_start|>).
+    (r"<[^<>]*>", ""),
+    (r"\\documentclass(\[[^\]]*\])?\{[^}]*\}", ""),
+    (r"\\usepackage(\[[^\]]*\])?\{[^}]*\}", ""),
+    (r"\\begin\{document\}|\\end\{document\}", ""),
     (r"\\begin\{(?:equation|displaymath|math|align)\*?\}", ""),
     (r"\\end\{(?:equation|displaymath|math|align)\*?\}", ""),
     (r"\\\[|\\\]|\\\(|\\\)", ""),
