@@ -96,5 +96,15 @@ Every config gets warmup calls first (2 by default) so the model is loaded and
 the first-token penalty isn't counted, and `p50`/`p95` are reported alongside
 the mean because the mean hides the tail — and the tail is what you notice.
 
+**Every pass starts with a cold image cache**, which matters more than it
+sounds. Ollama keeps the vision encoder's output per image for as long as the
+model stays resident: re-sending the same screenshot costs 0.005s of prefill
+instead of 0.44s. Left alone, whichever config happened to run second over the
+corpus looked 2.5x faster than the one before it. Since every real conversion
+is a screenshot the server has never seen, the runner unloads the model before
+each pass, warms up on an image outside the corpus, and mlx-vlm is run with
+`--vision-cache-size 0`. Set `reset = false` on a config if you specifically
+want the warm-cache number.
+
 Useful flags: `--repeats N` for more passes over the corpus (tighter numbers,
 longer runs), `--limit N` and `--tier simple` for quick smoke tests.
