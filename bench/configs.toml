@@ -255,3 +255,51 @@ model = "glm-ocr:latest"
 prompt_id = "strict"
 [run.glm-prompt-strict.options]
 stop = ["\n```", "\n$$"]
+
+
+# --- quantization ----------------------------------------------------------
+# Same weights at different precision. Note glm-ocr:latest is already bf16.
+
+[run.qwen3vl-2b-q8]
+model = "qwen3-vl:2b-instruct-q8_0"
+
+[run.qwen3vl-2b-bf16]
+model = "qwen3-vl:2b-instruct-bf16"
+
+[run.glm-ocr-q8]
+model = "glm-ocr:q8_0"
+[run.glm-ocr-q8.options]
+stop = ["\n```", "\n$$"]
+
+[run.gemma4-e2b-q4km]
+model = "gemma4:e2b-it-q4_K_M"
+think = false
+
+
+# --- server flags ----------------------------------------------------------
+# OLLAMA_FLASH_ATTENTION and OLLAMA_KV_CACHE_TYPE are set on the server, not
+# per request, so these point at a second instance started with:
+#   OLLAMA_HOST=127.0.0.1:11500 OLLAMA_FLASH_ATTENTION=1 \
+#   OLLAMA_KV_CACHE_TYPE=q8_0 ollama serve
+
+[run.flashattn-qwen3vl-2b]
+model = "qwen3-vl:2b-instruct"
+base_url = "http://127.0.0.1:11500"
+
+[run.flashattn-glm-ocr]
+model = "glm-ocr:q8_0"
+base_url = "http://127.0.0.1:11500"
+[run.flashattn-glm-ocr.options]
+stop = ["\n```", "\n$$"]
+
+[run.glm-ocr-q8-ctx2k]
+model = "glm-ocr:q8_0"
+[run.glm-ocr-q8-ctx2k.options]
+num_ctx = 2048
+stop = ["\n```", "\n$$"]
+
+[run.glm-ocr-q8-ctx1k]
+model = "glm-ocr:q8_0"
+[run.glm-ocr-q8-ctx1k.options]
+num_ctx = 1024
+stop = ["\n```", "\n$$"]
